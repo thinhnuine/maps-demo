@@ -1,118 +1,189 @@
-import Image from 'next/image'
-import { Inter } from 'next/font/google'
+import React, {useEffect, useRef, useState} from "react"
+import {GoogleMap, Marker, useJsApiLoader} from "@react-google-maps/api"
+import {CustomInput, positionAtom} from "./container/CustomInput"
+import {useAtomValue} from "jotai"
+import {Card} from "antd"
+import {CarType, CardCar} from "./container/CardCar"
+const containerStyle = {
+  width: "100%",
+  height: "100vh",
+}
 
-const inter = Inter({ subsets: ['latin'] })
+const center = {
+  lat: 21.00187585447847,
+  lng: 105.8229157865053,
+}
 
-export default function Home() {
-  return (
-    <main
-      className={`flex min-h-screen flex-col items-center justify-between p-24 ${inter.className}`}
-    >
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/pages/index.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
+const data = [
+  {
+    id: 1,
+    lat: 21.001976015497487,
+    lng: 105.82158541095238,
+    label: "$800/10h",
+    url: "marker-1.png",
+    urlSelected: "marker-selected.png",
+  },
+  {
+    id: 2,
+    lat: 21.003247162534965,
+    lng: 105.82842784314839,
+    label: "$900/4h",
+    url: "marker-2.png",
+    urlSelected: "marker-selected.png",
+  },
+  {
+    id: 3,
+    lat: 21.00733363997899,
+    lng: 105.83074527153092,
+    label: "$10/1h",
+    url: "marker-3.png",
+    urlSelected: "marker-selected.png",
+  },
+  {
+    id: 4,
+    lat: 21.00188497851894,
+    lng: 105.8157249023849,
+    label: "$1000/10h",
+    url: "marker-1.png",
+    urlSelected: "marker-selected.png",
+  },
+  {
+    id: 5,
+    lat: 20.99719518830571,
+    lng: 105.8251250464011,
+    label: "$400/4h",
+    url: "marker-2.png",
+    urlSelected: "marker-selected.png",
+  },
+  {
+    id: 6,
+    lat: 20.997425615120573,
+    lng: 105.81749972881452,
+    label: "$300/3h",
+    url: "marker-3.png",
+    urlSelected: "marker-selected.png",
+  },
+  {
+    id: 7,
+    lat: 21.004651124003946,
+    lng: 105.82653070013531,
+    label: "$500/2h",
+    url: "marker-3.png",
+    urlSelected: "marker-selected.png",
+  },
+  {
+    id: 8,
+    lat: 21.006421675755917,
+    lng: 105.82936190176676,
+    label: "$550/2h",
+    url: "marker-1.png",
+    urlSelected: "marker-selected.png",
+  },
+]
+
+const cars: CarType[] = Array(4)
+  .fill(0)
+  .map((_, index) => ({
+    id: index,
+    name: `Car-${index + 1}`,
+    numberOfPassenger: index + 1,
+    price: `${index + 1}000`,
+    url: `car-${index + 1}.jpg`,
+  }))
+
+function MyComponent() {
+  const {isLoaded} = useJsApiLoader({
+    id: "google-map-script",
+    googleMapsApiKey: "AIzaSyC3xMoM7Pr_5UAmLUSaiB8p5ga5TOg0lEM",
+    libraries: ["places"],
+  })
+
+  const position = useAtomValue(positionAtom)
+  const mapRef = useRef<google.maps.Map>()
+  const [selected, setSelected] = useState(0)
+  const [hoverId, setHoverId] = useState(0)
+
+  const onLoad = React.useCallback(function callback(map: google.maps.Map) {
+    map.setZoom(15)
+    mapRef.current = map
+  }, [])
+
+  useEffect(() => {
+    if (!mapRef.current || !position) return
+    mapRef.current.setCenter({
+      lat: position.lat,
+      lng: position.lng,
+    })
+    mapRef.current.setZoom(15)
+  }, [position])
+
+  const onUnmount = React.useCallback(function callback(map: google.maps.Map) {
+    if (mapRef?.current) {
+      mapRef.current = undefined
+    }
+  }, [])
+
+  return isLoaded ? (
+    <div className="flex h-[100vh]">
+      <div className="flex-shrink-0 w-[500px] px-5 py-2 overflow-y-scroll">
+        <CustomInput />
+
+        {!!selected
+          ? cars.filter((item) => item.id === selected).map((item) => <CardCar item={item} key={item.id} />)
+          : cars.map((item) => (
+              <Card
+                className="mt-5 border border-white cursor-pointer"
+                key={item.id}
+                onMouseOver={() => {
+                  setHoverId(item.id)
+                }}
+                onMouseLeave={() => setHoverId(0)}
+              >
+                <img alt="" src={"/" + item.url} className="w-full h-[200px] object-cover bg-center" />
+                <div className="flex flex-col gap-3 mt-3">
+                  <p>Name: {item.name}</p>
+                  <p>Number of passenger:{item.numberOfPassenger}</p>
+                  <p>Price: {item.price}</p>
+                </div>
+              </Card>
+            ))}
+      </div>
+      <GoogleMap
+        options={{mapTypeControl: false, fullscreenControl: false, streetViewControl: false}}
+        mapContainerStyle={containerStyle}
+        zoom={1}
+        center={center}
+        onLoad={(map: google.maps.Map) => onLoad(map)}
+        onClick={() => setSelected(0)}
+        onUnmount={onUnmount}
+      >
+        <>
+          {data.map((item) => (
+            <Marker
+              key={item.lat}
+              position={{lat: item.lat, lng: item.lng}}
+              onClick={() => {
+                setSelected(item.id)
+              }}
+              icon={{
+                url: selected === item.id || hoverId === item.id ? item.urlSelected : item.url,
+              }}
+              label={{
+                text: item.label,
+                fontWeight: "bold",
+                fontSize: "12px",
+                color: selected === item.id ? "#fff" : "#000",
+                className: "ml-[30px]",
+              }}
             />
-          </a>
-        </div>
-      </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700/10 after:dark:from-sky-900 after:dark:via-[#0141ff]/40 before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Discover and deploy boilerplate example Next.js&nbsp;projects.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+          ))}
+          {position.lat && <Marker position={{lat: position.lat, lng: position.lng}} />}
+        </>
+      </GoogleMap>
+    </div>
+  ) : (
+    <></>
   )
 }
+
+export default React.memo(MyComponent)
