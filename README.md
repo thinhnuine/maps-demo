@@ -12,5 +12,7 @@ yarn dev
 pnpm dev
 ```
 ## ENV VARIABLE
-NEXT_PUBLIC_GOOGLE_MAP_API_KEY = 
+``` 
+NEXT_PUBLIC_GOOGLE_MAP_API_KEY =
+```
 
