@@ -94,7 +94,7 @@ const cars: CarType[] = Array(4)
 function MyComponent() {
   const {isLoaded} = useJsApiLoader({
     id: "google-map-script",
-    googleMapsApiKey: "AIzaSyC3xMoM7Pr_5UAmLUSaiB8p5ga5TOg0lEM",
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAP_API_KEY!,
     libraries: ["places"],
   })
 
